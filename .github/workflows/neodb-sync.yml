@@ -116,17 +116,17 @@ jobs:
     #       fi
     #     done
 
-    # # 把修改后的数据提交到 GitHub 仓库
-    # - name: Git Add and Commit
-    #   if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
-    #   uses: EndBug/add-and-commit@v9
-    #   with:
-    #     message: 'chore(data): update neodb data'
-    #     committer_name: 'github-actions[bot]'
-    #     committer_email: 'github-actions[bot]@users.noreply.github.com'
-    #     add: |
-    #       './data'
-    #       './images'
+    # 把修改后的数据提交到 GitHub 仓库
+    - name: Git Add and Commit
+      if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
+      uses: EndBug/add-and-commit@v9
+      with:
+        message: 'chore(data): update neodb data'
+        committer_name: 'github-actions[bot]'
+        committer_email: 'github-actions[bot]@users.noreply.github.com'
+        add: |
+          './data'
+        #  './images'
 
     # # # 调用另外的 GitHub Actions 构建 Hugo
     # - name: Build Hugo and Deploy
