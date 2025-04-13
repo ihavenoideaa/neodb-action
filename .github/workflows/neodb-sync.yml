@@ -94,35 +94,35 @@ jobs:
           done
         fi
 
-    # 下载所有数据
-    - name: Get All NeoDB
-      if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
-      run: |
-        pages=${{ env.REMOTE_PAGES }}
+    # # 下载所有数据
+    # - name: Get All NeoDB
+    #   if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
+    #   run: |
+    #     pages=${{ env.REMOTE_PAGES }}
 
-        # 下载数据
-        for ((i=1; i<=$pages; i++)); do
-          url="${{ vars.NEODB_URL }}/api/me/shelf/complete?page=$i"
-          filename="movie$i.json"
+    #     # 下载数据
+    #     for ((i=1; i<=$pages; i++)); do
+    #       url="${{ vars.NEODB_URL }}/api/me/shelf/complete?page=$i"
+    #       filename="movie$i.json"
 
-          # 下载文件并保存为对应的文件名
-          curl -X 'GET' "$url" \
-            -H 'accept: application/json' \
-            -H 'Authorization: Bearer ${{ secrets.NEODB_ACCESS_TOKEN }}' > "$filename"
-        done
+    #       # 下载文件并保存为对应的文件名
+    #       curl -X 'GET' "$url" \
+    #         -H 'accept: application/json' \
+    #         -H 'Authorization: Bearer ${{ secrets.NEODB_ACCESS_TOKEN }}' > "$filename"
+    #     done
 
-        # 把所有数据合并成一个文件
-        jq -c -s '{data: map(.data[]) | unique | sort_by(.created_time) | reverse, pages: map(.pages)[0], count: map(.count)[0]}' *.json > movie.json
+    #     # 把所有数据合并成一个文件
+    #     jq -c -s '{data: map(.data[]) | unique | sort_by(.created_time) | reverse, pages: map(.pages)[0], count: map(.count)[0]}' *.json > movie.json
 
-        # 更新 NeoDB 数据
-        cp -f movie.json ${{ env.WORK_DIR }}/data/
+    #     # 更新 NeoDB 数据
+    #     cp -f movie.json ${{ env.WORK_DIR }}/data/
 
     #数据处理
     - name: Install axios
       run: npm install axios
 
     - name: Get Detail Data
-      if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
+      # if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
       id: handel-json
       uses: actions/github-script@v7
       with:
@@ -136,7 +136,7 @@ jobs:
             const json = JSON.parse(data);
             const all_json = {"data": []};
             for (const dataItem of json.data) {
-              const api_url = dataItem.item.api_url;
+              const api_url = `${{ vars.NEODB_URL }}${dataItem.item.api_url}`;
               try {
                 const response = await axios.get(api_url, { timeout: 5000 });
                 const oneItem = {
