@@ -195,12 +195,12 @@ jobs:
       # if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
       run: |
         # 检查 movie 目录是否存在，如果不存在则创建
-        if [ ! -d "movie" ]; then
-          mkdir movie
+        if [ ! -d "images" ]; then
+          mkdir images
         fi
 
         # 读取本地的 movie.json 文件内容
-        json=$(cat data/movie.json)
+        json=$(cat "${{ env.WORK_DIR }}/data/movie.json")
 
         # 提取图片 URL
         image_urls=$(echo "$json" | jq -r '.data[].item.cover_image_url')
