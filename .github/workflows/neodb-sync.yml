@@ -135,7 +135,7 @@ jobs:
 
           echo "开始处理"
           echo "$line"
-          detial_api=${{ vars.NEODB_URL }}$(echo "$line" | jq -r '.item.api_url');
+          detial_api="${{ vars.NEODB_URL }}$(echo '$line' | jq -r '.item.api_url')";
           echo "2"
           respone=$(curl -s $detial_api)
           echo "respone: $respone"
