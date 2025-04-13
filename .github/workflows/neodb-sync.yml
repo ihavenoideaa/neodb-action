@@ -80,10 +80,10 @@ jobs:
 
         # 检查备份文件数量
         BACKUP_COUNT=$(ls -1 ${{ env.WORK_DIR }}/data/backup/movie_*.json 2>/dev/null | wc -l)
-        if [ $BACKUP_COUNT -gt ${{ BACKUP_MAX_COUNT }} ]; then
+        if [ $BACKUP_COUNT -gt ${{ vars.BACKUP_MAX_COUNT }} ]; then
 
           # 计算需要删除的文件数量
-          NUM_TO_DELETE=$((BACKUP_COUNT - ${{ BACKUP_MAX_COUNT }}))
+          NUM_TO_DELETE=$((BACKUP_COUNT - ${{ vars.BACKUP_MAX_COUNT }}))
 
           # 获取最早的备份文件列表
           FILES_TO_DELETE=$(ls -1t ${{ env.WORK_DIR }}/data/backup/movie_*.json | tail -n $NUM_TO_DELETE)
