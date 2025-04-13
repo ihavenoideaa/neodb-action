@@ -119,6 +119,8 @@ jobs:
 
     #数据处理
     - name: Get Detail Data
+      env:
+        GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}  
       if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
       run: |
         # 读取本地的 movie.json 文件内容
@@ -149,8 +151,7 @@ jobs:
         # 写入新文件
         jq -c -n '{"data": []} + {data: [inputs]}' temp_result.json > result.json
         cp -f result.json ${{ env.WORK_DIR }}/data/
-      env:
-        GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}  
+      
         
 
     #下载封面
