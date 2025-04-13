@@ -119,11 +119,20 @@ jobs:
 
     #数据处理
     - name: Get Detail Data
+      env:
+        GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}  
       if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
       run: |
         # 读取本地的 movie.json 文件内容
         # 遍历data[]
         jq -c '.data[]' data/movie.json | while read line; do
+
+          # 创建 Gist 并上传 line
+          gist_filename="line_$(date +%Y%m%d%H%M%S%N).json"
+          echo "$line" > $gist_filename
+          gh gist create --public $gist_filename
+          rm $gist_filename
+
           echo "开始处理"
           echo "$line"
           detial_api=${{ vars.NEODB_URL }}$(echo "$line" | jq -r '.item.api_url');
@@ -136,7 +145,7 @@ jobs:
           year=$(echo "$respone" | jq -r '.year' );
           echo "4"
           echo "$line" | jq -c --arg language "$language" --arg year "$year" '{title: .item.title, type: .item.type, cover_image_url: .item.cover_image_url, language: $language, year: $year, rating: .item.rating, url: .item.url, external_resources: .item.external_resources, created_time: .created_time, comment_text: .comment_text, rating_grade: .rating_grade, tags: .tags}' >> temp_result.json
-          echo "处理成功"
+          echo "处理成功";
         done
 
         # 写入新文件
