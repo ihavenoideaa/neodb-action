@@ -76,7 +76,7 @@ jobs:
           cp -f $TARGET_FILE $BACKUP_FILE
           echo "Backed up old data to $BACKUP_FILE"
         else
-          echo "No old data"
+          echo "There is no old data."
         fi
 
         # 检查备份文件数量
@@ -124,13 +124,13 @@ jobs:
         # 读取本地的 movie.json 文件内容
         # 遍历data[]
         jq -c '.data[]' data/movie.json | while read line; do
-          detial_api=${{ vars.NEODB_URL }}$(echo $line | jq -r '.item.api_url');
+          detial_api=${{ vars.NEODB_URL }}$(echo "$line" | jq -r '.item.api_url');
           
           respone=$(curl -s $detial_api)
 
-          language=$(echo $respone | jq -r '.language' );
-          year=$(echo $respone | jq -r '.year' );
-          echo $line | jq -c '{title: .item.title, type: .item.type, cover_image_url: .item.cover_image_url, language: $language, year: $year, rating: .item.rating, url: .item.url, external_resources: .item.external_resources, created_time: .created_time, comment_text: .comment_text, rating_grade: .rating_grade, tags: .tags}' >> temp_result.json
+          language=$(echo "$respone" | jq -r '.language' );
+          year=$(echo "$respone" | jq -r '.year' );
+          echo "$line" | jq -c --arg language "$language" --arg year "$year" '{title: .item.title, type: .item.type, cover_image_url: .item.cover_image_url, language: $language, year: $year, rating: .item.rating, url: .item.url, external_resources: .item.external_resources, created_time: .created_time, comment_text: .comment_text, rating_grade: .rating_grade, tags: .tags}' >> temp_result.json
 
         done
 
