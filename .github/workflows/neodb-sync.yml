@@ -76,14 +76,14 @@ jobs:
         echo "Backed up old data to $BACKUP_FILE"
 
         # 检查备份文件数量
-        BACKUP_COUNT=$(ls -1 ${{ env.WORK_DIR }}/data/movie_*.json 2>/dev/null | wc -l)
+        BACKUP_COUNT=$(ls -1 ${{ env.WORK_DIR }}/data/backup/movie_*.json 2>/dev/null | wc -l)
         if [ $BACKUP_COUNT -gt ${{ BACKUP_MAX_COUNT }} ]; then
 
           # 计算需要删除的文件数量
           NUM_TO_DELETE=$((BACKUP_COUNT - ${{ BACKUP_MAX_COUNT }}))
 
           # 获取最早的备份文件列表
-          FILES_TO_DELETE=$(ls -1t ${{ env.WORK_DIR }}/data/movie_*.json | tail -n $NUM_TO_DELETE)
+          FILES_TO_DELETE=$(ls -1t ${{ env.WORK_DIR }}/data/backup/movie_*.json | tail -n $NUM_TO_DELETE)
           for file in $FILES_TO_DELETE; do
             rm $file
             echo "Deleted old backup: $file"
