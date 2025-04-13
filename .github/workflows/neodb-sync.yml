@@ -121,83 +121,108 @@ jobs:
     - name: Install axios
       run: npm install axios
 
-    - name: Get Detail Data
-      # if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
-      id: handel-json
-      uses: actions/github-script@v7
-      with:
-        result-encoding: string
-        script: |
-          const fs = require('fs');
-          const axios = require('axios');
-          const targetFile = "${{ env.WORK_DIR }}/data/movie.json";
-          try {
-            const data = fs.readFileSync(targetFile, 'utf8');
-            const json = JSON.parse(data);
-            const all_json = {"data": []};
-            for (const dataItem of json.data) {
-              const api_url = `${{ vars.NEODB_URL }}${dataItem.item.api_url}`;
-              try {
-                const response = await axios.get(api_url, { timeout: 5000 });
-                const oneItem = {
-                  title: dataItem.item.title,
-                  type: dataItem.item.type,
-                  rating: dataItem.item.rating,
-                  url: dataItem.item.url,
-                  description: dataItem.item.description,
-                  created_time: dataItem.created_time,
-                  comment_text: dataItem.comment_text,
-                  rating_grade: dataItem.rating_grade,
-                  tags: dataItem.tags,
-                  year: response.data.year,
-                  language: response.data.language
-                };
-                all_json.data.push(oneItem);
-              } catch (axiosError) {
-                console.error(`Error fetching data from ${api_url}:`, axiosError);
-              }
-            }
-            core.setOutput('all_json', JSON.stringify(all_json));
-            // 将 all_json 保存到 result.json 文件
-            const resultFilePath = "${{ env.WORK_DIR }}/data/result.json";
-            fs.writeFileSync(resultFilePath, JSON.stringify(all_json, null, 2));
-            console.log(`Data saved to ${resultFilePath}`);
-          } catch (error) {
-            console.error('Error reading JSON file:', error);
-            core.setFailed('Failed to read JSON file');
-          }
+    # - name: Get Detail Data
+    #   # if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
+    #   id: handel-json
+    #   uses: actions/github-script@v7
+    #   with:
+    #     result-encoding: string
+    #     script: |
+    #       const fs = require('fs');
+    #       const axios = require('axios');
+
+    #       const targetFilePath = "${{ env.WORK_DIR }}/data/movie.json";
+    #       const resultFilePath = "${{ env.WORK_DIR }}/data/result.json";
+    #       let resultData = [];
+    #       try {
+    #         if (fs.existsSync(resultFilePath)) {
+    #           const resultData = fs.readFileSync(resultFilePath, 'utf8');
+    #           resultData = JSON.parse(resultData).data || [];
+    #         }
+    #       } catch (readError) {
+    #         console.error('Error reading result.json:', readError);
+    #       }
+
+    #       try {
+    #         const data = fs.readFileSync(targetFilePath, 'utf8');
+    #         const json = JSON.parse(data);
+    #         const all_json = {"data": []};
+    #         for (const dataItem of json.data) {
+    #           const isDuplicate = resultData.some(item => item.post_id === dataItem.post_id);
+    #           if (isDuplicate) {
+    #             console.log(`Skipping duplicate item with title: ${dataItem.item.title}`);
+    #             continue;
+    #           }
+
+    #           let img_url;
+
+
+    #           const api_url = `${{ vars.NEODB_URL }}${dataItem.item.api_url}`;
+    #           try {
+    #             const response = await axios.get(api_url, { timeout: 5000 });
+
+    #             // 组成 json
+    #             const oneItem = {
+    #               post_id: dataItem.post_id,
+    #               title: dataItem.item.title,
+    #               type: dataItem.item.type,
+    #               rating: dataItem.item.rating,
+    #               url: dataItem.item.url,
+    #               description: dataItem.item.description,
+    #               created_time: dataItem.created_time,
+    #               comment_text: dataItem.comment_text,
+    #               rating_grade: dataItem.rating_grade,
+    #               tags: dataItem.tags,
+    #               year: response.data.year,
+    #               language: response.data.language
+    #               cover: img_url
+    #             };
+    #             resultData.push(oneItem);
+    #           } catch (axiosError) {
+    #             console.error(`Error sending GET request to ${api_url}:`, axiosError);
+    #           }
+    #         }
+    #         //core.setOutput('all_json', JSON.stringify(all_json));
+    #         fs.writeFileSync(resultFilePath, JSON.stringify({ data: resultData }, null, 2));
+    #         console.log(`Data saved to ${resultFilePath}`);
+    #       } catch (error) {
+    #         console.error('Error reading JSON file:', error);
+    #         core.setFailed('Failed to read JSON file');
+    #       }
         
     #下载封面
-    # - name: Download NeoDB Cover
-    #   if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
-    #   run: |
-    #     # 检查 movie 目录是否存在，如果不存在则创建
-    #     if [ ! -d "movie" ]; then
-    #       mkdir movie
-    #     fi
+    - name: Download NeoDB Cover
+      # if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
+      run: |
+        # 检查 movie 目录是否存在，如果不存在则创建
+        if [ ! -d "movie" ]; then
+          mkdir movie
+        fi
 
-    #     # 读取本地的 movie.json 文件内容
-    #     json=$(cat data/movie.json)
+        # 读取本地的 movie.json 文件内容
+        json=$(cat data/movie.json)
 
-    #     # 提取图片 URL
-    #     image_urls=$(echo "$json" | jq -r '.data[].item.cover_image_url')
+        # 提取图片 URL
+        image_urls=$(echo "$json" | jq -r '.data[].item.cover_image_url')
 
-    #     # 遍历图片 URL 并下载图片
-    #     for url in $image_urls; do
+        # 遍历图片 URL 并下载图片
+        for url in $image_urls; do
 
-    #       filename=$(basename "$url")
-    #       filepath="assets/images/neodb/cover/$filename"
+          filename=$(basename "$url")
+          filepath="images/cover/$filename"
 
-    #       # 检查文件是否已存在
-    #       if [ -f "$filepath" ]; then
-    #         echo "Skipping $filename - File already exists"
-    #       else
-    #         # 使用 curl 命令下载图片
-    #         curl -o "$filepath" "$url"
-    #         echo "Downloaded $filename"
-    #         echo "REMOTE_UUID=''" >> $GITHUB_ENV
-    #       fi
-    #     done
+          # 检查文件是否已存在
+          if [ -f "$filepath" ]; then
+            echo "Skipping $filename - File already exists"
+          else
+            # 使用 curl 命令下载图片
+            curl -o "$filepath" "$url"
+            echo "Downloaded $filename"
+            echo "REMOTE_UUID=''" >> $GITHUB_ENV
+          fi
+        done
+
+    # 上传
 
     # 把修改后的数据提交到 GitHub 仓库
     - name: Git Add and Commit
@@ -209,4 +234,4 @@ jobs:
         committer_email: 'github-actions[bot]@users.noreply.github.com'
         add: |
           './data'
-        # './images'
+          './images'
