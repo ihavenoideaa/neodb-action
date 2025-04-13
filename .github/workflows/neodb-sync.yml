@@ -11,9 +11,6 @@ on:
   repository_dispatch:
     types: [sync-neodb]
 
-env:
-  neodb_url: ${{ vars.NEODB_URL }}
-
 jobs:
   douban:
     name: Sync NeoDB Data
@@ -47,7 +44,7 @@ jobs:
     - name: Get NeoDB Latest UUID and Pages
       run: |
         RESPONSE=$(curl -s -X 'GET' \
-          'https://neodb.social/api/me/shelf/complete?page=1' \
+          "${{ vars.NEODB_URL }}/api/me/shelf/complete?page=1" \
           -H 'accept: application/json' \
           -H 'Authorization: Bearer ${{ secrets.NEODB_ACCESS_TOKEN }}')
 
@@ -73,10 +70,14 @@ jobs:
       run: |
         TIMESTAMP=$(date +%Y%m%d%H%M%S)
         BACKUP_FILE="${{ env.WORK_DIR }}/data/backup/movie_$TIMESTAMP.json"
-
-        cp ${{ env.WORK_DIR }}/data/movie.json $BACKUP_FILE
-
-        echo "Backed up old data to $BACKUP_FILE"
+        TARGET_FILE= "${{ env.WORK_DIR }}/data/movie.json"
+        
+        if [[ -f "$TARGET_FILE" ]]; then
+          cp -f $TARGET_FILE $BACKUP_FILE
+          echo "Backed up old data to $BACKUP_FILE"
+        else
+          echo "No old data"
+        fi
 
         # 检查备份文件数量
         BACKUP_COUNT=$(ls -1 ${{ env.WORK_DIR }}/data/backup/movie_*.json 2>/dev/null | wc -l)
@@ -101,7 +102,7 @@ jobs:
 
         # 下载数据
         for ((i=1; i<=$pages; i++)); do
-          url="$neodb_url/api/me/shelf/complete?page=$i"
+          url="${{ vars.NEODB_URL }}/api/me/shelf/complete?page=$i"
           filename="movie$i.json"
 
           # 下载文件并保存为对应的文件名
@@ -123,7 +124,7 @@ jobs:
         # 读取本地的 movie.json 文件内容
         # 遍历data[]
         jq -c '.data[]' data/movie.json | while read line; do
-          detial_api=$neodb_url$(echo $line | jq -r '.item.api_url');
+          detial_api=${{ vars.NEODB_URL }}$(echo $line | jq -r '.item.api_url');
           
           respone=$(curl -s $detial_api)
 
