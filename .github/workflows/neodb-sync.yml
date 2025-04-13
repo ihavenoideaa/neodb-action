@@ -119,8 +119,8 @@ jobs:
 
     #数据处理
     - name: Install axios
-        run: npm install axios
-        
+      run: npm install axios
+
     - name: Get Detail Data
       if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
       id: handel-json
