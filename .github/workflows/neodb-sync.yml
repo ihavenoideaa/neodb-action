@@ -47,7 +47,7 @@ jobs:
     - name: Get NeoDB Latest UUID and Pages
       run: |
         RESPONSE=$(curl -s -X 'GET' \
-          '$neodb_url/api/me/shelf/complete?page=1' \
+          'https://neodb.social/api/me/shelf/complete?page=1' \
           -H 'accept: application/json' \
           -H 'Authorization: Bearer ${{ secrets.NEODB_ACCESS_TOKEN }}')
 
