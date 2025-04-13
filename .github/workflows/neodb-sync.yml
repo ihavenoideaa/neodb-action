@@ -125,6 +125,7 @@ jobs:
         # 遍历data[]
         jq -c '.data[]' data/movie.json | while read line; do
           echo "开始处理"
+          echo "$line"
           detial_api=${{ vars.NEODB_URL }}$(echo "$line" | jq -r '.item.api_url');
           echo "2"
           respone=$(curl -s $detial_api)
@@ -135,7 +136,7 @@ jobs:
           year=$(echo "$respone" | jq -r '.year' );
           echo "4"
           echo "$line" | jq -c --arg language "$language" --arg year "$year" '{title: .item.title, type: .item.type, cover_image_url: .item.cover_image_url, language: $language, year: $year, rating: .item.rating, url: .item.url, external_resources: .item.external_resources, created_time: .created_time, comment_text: .comment_text, rating_grade: .rating_grade, tags: .tags}' >> temp_result.json
-          echo "处理成功 $line"
+          echo "处理成功"
         done
 
         # 写入新文件
