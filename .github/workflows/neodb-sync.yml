@@ -117,35 +117,54 @@ jobs:
         # 更新 NeoDB 数据
         cp -f movie.json ${{ env.WORK_DIR }}/data/
 
-    # #数据处理
-    # - name: Get Detail Data
-    #   if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
-    #   run: |
-    #     # 读取本地的 movie.json 文件内容
-    #     # 遍历data[]
-    #     jq -c '.data[]' data/movie.json | while read line; do
-
-    #       echo "开始处理"
-    #       echo "$line"
-    #       detial_api="${{ vars.NEODB_URL }}$(echo $line | jq -r '.item.api_url')";
-    #       echo "2"
-    #       respone=$(curl -s $detial_api)
-    #       echo "respone: $respone"
-
-    #       language=$(echo "$respone" | jq -r '.language' );
-    #       echo "3"
-    #       year=$(echo "$respone" | jq -r '.year' );
-    #       echo "4"
-    #       echo "$line" | jq -c --arg language "$language" --arg year "$year" '{title: .item.title, type: .item.type, cover_image_url: .item.cover_image_url, language: $language, year: $year, rating: .item.rating, url: .item.url, external_resources: .item.external_resources, created_time: .created_time, comment_text: .comment_text, rating_grade: .rating_grade, tags: .tags}' >> temp_result.json
-    #       echo "处理成功";
-    #     done
-
-    #     # 写入新文件
-    #     jq -c -n '{"data": []} + {data: [inputs]}' temp_result.json > result.json
-    #     cp -f result.json ${{ env.WORK_DIR }}/data/
-      
+    #数据处理
+    - name: Get Detail Data
+      if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
+      id: handel-json
+      uses: actions/github-script@v7
+      with:
+        result-encoding: string
+        script: |
+          const fs = require('fs');
+          const axios = require('axios');
+          const core = require('@actions/core');
+          const targetFile = "${{ env.WORK_DIR }}/data/movie.json";
+          try {
+            const data = fs.readFileSync(targetFile, 'utf8');
+            const json = JSON.parse(data);
+            const all_json = {"data": []};
+            for (const dataItem of json.data) {
+              const api_url = dataItem.item.api_url;
+              try {
+                const response = await axios.get(api_url, { timeout: 5000 });
+                const oneItem = {
+                  title: dataItem.item.title,
+                  type: dataItem.item.type,
+                  rating: dataItem.item.rating,
+                  url: dataItem.item.url,
+                  description: dataItem.item.description,
+                  created_time: dataItem.created_time,
+                  comment_text: dataItem.comment_text,
+                  rating_grade: dataItem.rating_grade,
+                  tags: dataItem.tags,
+                  year: response.data.year,
+                  language: response.data.language
+                };
+                all_json.data.push(oneItem);
+              } catch (axiosError) {
+                console.error(`Error fetching data from ${api_url}:`, axiosError);
+              }
+            }
+            core.setOutput('all_json', JSON.stringify(all_json));
+            // 将 all_json 保存到 result.json 文件
+            const resultFilePath = "${{ env.WORK_DIR }}/data/result.json";
+            fs.writeFileSync(resultFilePath, JSON.stringify(all_json, null, 2));
+            console.log(`Data saved to ${resultFilePath}`);
+          } catch (error) {
+            console.error('Error reading JSON file:', error);
+            core.setFailed('Failed to read JSON file');
+          }
         
-
     #下载封面
     # - name: Download NeoDB Cover
     #   if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
