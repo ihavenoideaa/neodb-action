@@ -125,17 +125,17 @@ jobs:
         # 遍历data[]
         jq -c '.data[]' data/movie.json | while read line; do
           detial_api=${{ vars.NEODB_URL }}$(echo "$line" | jq -r '.item.api_url');
-          
           respone=$(curl -s $detial_api)
+          echo $respone
 
           language=$(echo "$respone" | jq -r '.language' );
           year=$(echo "$respone" | jq -r '.year' );
           echo "$line" | jq -c --arg language "$language" --arg year "$year" '{title: .item.title, type: .item.type, cover_image_url: .item.cover_image_url, language: $language, year: $year, rating: .item.rating, url: .item.url, external_resources: .item.external_resources, created_time: .created_time, comment_text: .comment_text, rating_grade: .rating_grade, tags: .tags}' >> temp_result.json
-
+          echo "$line 处理成功"
         done
 
         # 写入新文件
-        jq -n '{"data": []} + {data: [inputs]}' temp_result.json > result.json
+        jq -c -n '{"data": []} + {data: [inputs]}' temp_result.json > result.json
         cp -f result.json ${{ env.WORK_DIR }}/data/
         
 
