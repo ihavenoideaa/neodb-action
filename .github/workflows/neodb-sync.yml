@@ -150,7 +150,7 @@ jobs:
         jq -c -n '{"data": []} + {data: [inputs]}' temp_result.json > result.json
         cp -f result.json ${{ env.WORK_DIR }}/data/
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
+        GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}  
         
 
     #下载封面
