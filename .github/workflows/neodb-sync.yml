@@ -11,6 +11,9 @@ on:
   repository_dispatch:
     types: [sync-neodb]
 
+env:
+  neodb_url: ${{ vars.NEODB_URL }}
+
 jobs:
   douban:
     name: Sync NeoDB Data
@@ -44,7 +47,7 @@ jobs:
     - name: Get NeoDB Latest UUID and Pages
       run: |
         RESPONSE=$(curl -s -X 'GET' \
-          '${{ variables.NEODB_URL }}/api/me/shelf/complete?page=1' \
+          '$neodb_url/api/me/shelf/complete?page=1' \
           -H 'accept: application/json' \
           -H 'Authorization: Bearer ${{ secrets.NEODB_ACCESS_TOKEN }}')
 
@@ -98,7 +101,7 @@ jobs:
 
         # 下载数据
         for ((i=1; i<=$pages; i++)); do
-          url="${{ variables.NEODB_URL }}/api/me/shelf/complete?page=$i"
+          url="$neodb_url/api/me/shelf/complete?page=$i"
           filename="movie$i.json"
 
           # 下载文件并保存为对应的文件名
@@ -120,7 +123,7 @@ jobs:
         # 读取本地的 movie.json 文件内容
         # 遍历data[]
         jq -c '.data[]' data/movie.json | while read line; do
-          detial_api=${{ variables.NEODB_URL }}$(echo $line | jq -r '.item.api_url');
+          detial_api=$neodb_url$(echo $line | jq -r '.item.api_url');
           
           respone=$(curl -s $detial_api)
 
