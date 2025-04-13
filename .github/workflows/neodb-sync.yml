@@ -70,7 +70,7 @@ jobs:
       run: |
         TIMESTAMP=$(date +%Y%m%d%H%M%S)
         BACKUP_FILE="${{ env.WORK_DIR }}/data/backup/movie_$TIMESTAMP.json"
-        TARGET_FILE= "${{ env.WORK_DIR }}/data/movie.json"
+        TARGET_FILE="${{ env.WORK_DIR }}/data/movie.json"
         
         if [[ -f "$TARGET_FILE" ]]; then
           cp -f $TARGET_FILE $BACKUP_FILE
