@@ -209,7 +209,7 @@ jobs:
         for url in $image_urls; do
 
           filename=$(basename "$url")
-          filepath="images/cover/$filename"
+          filepath="images/$filename"
 
           # 检查文件是否已存在
           if [ -f "$filepath" ]; then
