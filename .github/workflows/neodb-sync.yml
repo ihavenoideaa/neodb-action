@@ -44,7 +44,7 @@ jobs:
     - name: Get NeoDB Latest UUID and Pages
       run: |
         RESPONSE=$(curl -s -X 'GET' \
-          'https://neodb.social/api/me/shelf/complete?page=1' \
+          '${{ variables.NEODB_URL }}/api/me/shelf/complete?page=1' \
           -H 'accept: application/json' \
           -H 'Authorization: Bearer ${{ secrets.NEODB_ACCESS_TOKEN }}')
 
@@ -64,6 +64,32 @@ jobs:
           exit 0
         fi
 
+     # 备份旧文件并保持最多 10 份备份
+    - name: Backup Old Data
+      if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
+      run: |
+        TIMESTAMP=$(date +%Y%m%d%H%M%S)
+        BACKUP_FILE="${{ env.WORK_DIR }}/data/backup/movie_$TIMESTAMP.json"
+
+        cp ${{ env.WORK_DIR }}/data/movie.json $BACKUP_FILE
+
+        echo "Backed up old data to $BACKUP_FILE"
+
+        # 检查备份文件数量
+        BACKUP_COUNT=$(ls -1 ${{ env.WORK_DIR }}/data/movie_*.json 2>/dev/null | wc -l)
+        if [ $BACKUP_COUNT -gt ${{ BACKUP_MAX_COUNT }} ]; then
+
+          # 计算需要删除的文件数量
+          NUM_TO_DELETE=$((BACKUP_COUNT - ${{ BACKUP_MAX_COUNT }}))
+
+          # 获取最早的备份文件列表
+          FILES_TO_DELETE=$(ls -1t ${{ env.WORK_DIR }}/data/movie_*.json | tail -n $NUM_TO_DELETE)
+          for file in $FILES_TO_DELETE; do
+            rm $file
+            echo "Deleted old backup: $file"
+          done
+        fi
+
     # 下载所有数据
     - name: Get All NeoDB
       if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
@@ -72,13 +98,13 @@ jobs:
 
         # 下载数据
         for ((i=1; i<=$pages; i++)); do
-          url="https://neodb.social/api/me/shelf/complete?page=$i"
+          url="${{ variables.NEODB_URL }}/api/me/shelf/complete?page=$i"
           filename="movie$i.json"
 
-        # 下载文件并保存为对应的文件名
-        curl -X 'GET' "$url" \
-          -H 'accept: application/json' \
-          -H 'Authorization: Bearer ${{ secrets.NEODB_ACCESS_TOKEN }}' > "$filename"
+          # 下载文件并保存为对应的文件名
+          curl -X 'GET' "$url" \
+            -H 'accept: application/json' \
+            -H 'Authorization: Bearer ${{ secrets.NEODB_ACCESS_TOKEN }}' > "$filename"
         done
 
         # 把所有数据合并成一个文件
@@ -87,6 +113,29 @@ jobs:
         # 更新 NeoDB 数据
         cp -f movie.json ${{ env.WORK_DIR }}/data/
 
+    #数据处理
+    - name: Get Detail Data
+      if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
+      run: |
+        # 读取本地的 movie.json 文件内容
+        # 遍历data[]
+        jq -c '.data[]' data/movie.json | while read line; do
+          detial_api=${{ variables.NEODB_URL }}$(echo $line | jq -r '.item.api_url');
+          
+          respone=$(curl -s $detial_api)
+
+          language=$(echo $respone | jq -r '.language' );
+          year=$(echo $respone | jq -r '.year' );
+          echo $line | jq -c '{title: .item.title, type: .item.type, cover_image_url: .item.cover_image_url, language: $language, year: $year, rating: .item.rating, url: .item.url, external_resources: .item.external_resources, created_time: .created_time, comment_text: .comment_text, rating_grade: .rating_grade, tags: .tags}' >> temp_result.json
+
+        done
+
+        # 写入新文件
+        jq -n '{"data": []} + {data: [inputs]}' temp_result.json > result.json
+        cp -f result.json ${{ env.WORK_DIR }}/data/
+        
+
+    #下载封面
     # - name: Download NeoDB Cover
     #   if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
     #   run: |
@@ -96,15 +145,17 @@ jobs:
     #     fi
 
     #     # 读取本地的 movie.json 文件内容
-    #     json=$(cat assets/data/neodb/movie.json)
+    #     json=$(cat data/movie.json)
 
     #     # 提取图片 URL
     #     image_urls=$(echo "$json" | jq -r '.data[].item.cover_image_url')
 
     #     # 遍历图片 URL 并下载图片
     #     for url in $image_urls; do
+
     #       filename=$(basename "$url")
     #       filepath="assets/images/neodb/cover/$filename"
+
     #       # 检查文件是否已存在
     #       if [ -f "$filepath" ]; then
     #         echo "Skipping $filename - File already exists"
@@ -126,25 +177,4 @@ jobs:
         committer_email: 'github-actions[bot]@users.noreply.github.com'
         add: |
           './data'
-        #  './images'
-
-    # # # 调用另外的 GitHub Actions 构建 Hugo
-    # - name: Build Hugo and Deploy
-    #   if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
-    #   uses: peter-evans/repository-dispatch@v3
-    #   with:
-    #       event-type: build-hugo
-
-    # # 同步新海报到 s3
-    # - name: Sync Cover to static s3
-    #   if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
-    #   run: |
-    #     git clone https://github.com/eallion/static tmp
-    #     cp -rn assets/images/neodb/cover/* tmp/images/neodb/
-    #     cd tmp
-    #     git config user.name "eallion"
-    #     git config user.email "eallion.s+github@gmail.com"
-    #     git remote set-url --add --push origin https://eallion:${{ secrets.PICLIST_GITHUB_TOKEN }}@github.com/eallion/static.git
-    #     git add .
-    #     git commit -m "chore: sync cover"
-    #     git push
+        # './images'
