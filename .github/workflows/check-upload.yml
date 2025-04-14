@@ -49,6 +49,7 @@ jobs:
             const data = fs.readFileSync(targetFilePath, 'utf8');
             const json = JSON.parse(data);
             const all_json = {"data": []};
+            let error_upload = [];
             for (const dataItem of json.data) {
               const isDuplicate = resultData.some(item => item.post_id === dataItem.post_id);
               if (isDuplicate) {
@@ -75,6 +76,7 @@ jobs:
                 console.log('Image upload api success:', uploadResponse.data);
                 cover_img_url = uploadResponse.data.url;
               } catch (uploadError) {
+                error_upload.push({"title": dataItem.item.title, "origin_url":dataItem.item.cover_image_url});
                 console.error('Image upload api error:', uploadError);
                 continue;
               }
@@ -104,6 +106,8 @@ jobs:
                 console.error(`Error sending GET request to ${api_url}:`, axiosError);
               }
             }
+            console.log("Failed to upload images:" error_upload)
+
             resultData.sort((a, b) => new Date(b.created_time) - new Date(a.created_time));
 
             //core.setOutput('resultData', JSON.stringify(resultData));
