@@ -214,7 +214,7 @@ jobs:
           }
 
         
-    下载封面
+    #下载封面
     - name: Download NeoDB Cover
       if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
       run: |
