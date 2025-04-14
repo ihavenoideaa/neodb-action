@@ -33,8 +33,8 @@ jobs:
           const axios = require('axios');
           const FormData = require('form-data');
 
-          const targetFilePath = "${{ env.WORK_DIR }}/data/movie.json";
-          const resultFilePath = "${{ env.WORK_DIR }}/data/result.json";
+          const targetFilePath = "data/movie.json";
+          const resultFilePath = "data/result.json";
           let resultData = [];
           try {
             if (fs.existsSync(resultFilePath)) {
