@@ -119,7 +119,7 @@ jobs:
 
     #数据处理
     - name: Install axios
-      run: npm install axios
+      run: npm install axios@1.8.4
 
     - name: Get Detail Data
       # if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
@@ -130,6 +130,7 @@ jobs:
         script: |
           const fs = require('fs');
           const axios = require('axios');
+          const FormData = require('form-data');
 
           const targetFilePath = "${{ env.WORK_DIR }}/data/movie.json";
           const resultFilePath = "${{ env.WORK_DIR }}/data/result.json";
