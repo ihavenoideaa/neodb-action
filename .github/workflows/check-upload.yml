@@ -91,7 +91,7 @@ jobs:
                   comment_text: dataItem.comment_text,
                   rating_grade: dataItem.rating_grade,
                   tags: dataItem.tags,
-                  year: response.data.year,
+                  year: response.data.year ? response.data.year : response.data.pub_year,
                   language: response.data.language,
                   cover: cover_img_url,
                   external_resources: dataItem.item.external_resources
