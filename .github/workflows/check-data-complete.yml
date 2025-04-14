@@ -56,7 +56,8 @@ jobs:
               
               for (const dataItem of resultData) {
                 const hasExtrRes = 'external_resources' in dataItem;
-                if(!hasExtrRes) { 
+                if(!hasExtrRes) {
+                  console.log(`${dataItem.title}中属性不存在, 现在添加`);
                   const postId = dataItem.post_id;
                   const targetItem = movieJson.data.find(item => item.post_id === postId);
                   if(targetItem) {
