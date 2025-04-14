@@ -1,12 +1,6 @@
 name: Sync NeoDB Data
 
 on:
-#  schedule:
-  # every monday
-#    - cron: "0 9 * * 1"
-  # watch:
-  #   types: [started]
-
   workflow_dispatch:
   repository_dispatch:
     types: [sync-neodb]

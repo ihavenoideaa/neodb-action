@@ -1,6 +1,9 @@
 name: Check NeoDB Data
 
 on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [check-neodb-data-struct]
 
 jobs:
   douban:
