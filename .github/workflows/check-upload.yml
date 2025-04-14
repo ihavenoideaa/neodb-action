@@ -40,7 +40,6 @@ jobs:
             if (fs.existsSync(resultFilePath)) {
               resultData = fs.readFileSync(resultFilePath, 'utf8');
               resultData = JSON.parse(resultData).data || [];
-              console.log("读取：", resultData)
             }
           } catch (readError) {
             console.error('Error reading result.json:', readError);
@@ -51,17 +50,11 @@ jobs:
             const json = JSON.parse(data);
             const all_json = {"data": []};
             let error_upload = [];
-            let testCount =1;
             for (const dataItem of json.data) {
-              testCount+=1;
-              if(testCount >=5) break;
               const isDuplicate = resultData.some(item => item.post_id === dataItem.post_id);
               if (isDuplicate) {
                 console.log(`Skipping duplicate item with title: ${dataItem.item.title}`);
                 continue;
-              }
-              else {
-                console.log(`${dataItem.post_id}不存在`)
               }
 
               // 图片上传图床

@@ -137,7 +137,7 @@ jobs:
           let resultData = [];
           try {
             if (fs.existsSync(resultFilePath)) {
-              const resultData = fs.readFileSync(resultFilePath, 'utf8');
+              resultData = fs.readFileSync(resultFilePath, 'utf8');
               resultData = JSON.parse(resultData).data || [];
             }
           } catch (readError) {
@@ -181,7 +181,6 @@ jobs:
               const api_url = `${{ vars.NEODB_URL }}${dataItem.item.api_url}`;
               try {
                 const response = await axios.get(api_url, { timeout: 5000 });
-
                 // 组成 json
                 const oneItem = {
                   post_id: dataItem.post_id,
@@ -212,7 +211,6 @@ jobs:
             console.error('Error reading JSON file:', error);
             core.setFailed('Failed to read JSON file');
           }
-
         
     #下载封面
     - name: Download NeoDB Cover
