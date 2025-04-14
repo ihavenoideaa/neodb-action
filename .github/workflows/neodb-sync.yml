@@ -195,7 +195,8 @@ jobs:
                   tags: dataItem.tags,
                   year: response.data.year,
                   language: response.data.language,
-                  cover: cover_img_url
+                  cover: cover_img_url,
+                  external_resources: dataItem.item.external_resources
                 };
                 resultData.push(oneItem);
               } catch (axiosError) {
