@@ -116,7 +116,7 @@ jobs:
       run: npm install axios@1.8.4
 
     - name: Get Detail Data
-      # if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
+      if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
       id: handel-json
       uses: actions/github-script@v7
       with:
@@ -141,7 +141,6 @@ jobs:
           try {
             const data = fs.readFileSync(targetFilePath, 'utf8');
             const json = JSON.parse(data);
-            const all_json = {"data": []};
             for (const dataItem of json.data) {
               const isDuplicate = resultData.some(item => item.post_id === dataItem.post_id);
               if (isDuplicate) {
@@ -190,7 +189,8 @@ jobs:
                   year: response.data.year ? response.data.year : response.data.pub_year,
                   language: response.data.language,
                   cover: cover_img_url,
-                  external_resources: dataItem.item.external_resources
+                  external_resources: dataItem.item.external_resources,
+                  area: response.data.area
                 };
                 resultData.push(oneItem);
               } catch (axiosError) {

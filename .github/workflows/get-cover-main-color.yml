@@ -1,13 +1,13 @@
-name: Check NeoDB Data Struct Axios
+name: GET NeoDB COVER MAIN COLOR
 
 on:
   workflow_dispatch:
   repository_dispatch:
-    types: [check-neodb-data-struct]
+    types: [get-color-neodb]
 
 jobs:
   douban:
-    name: Check Data struct
+    name: Get NeoDB Cover Color
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -16,7 +16,7 @@ jobs:
     - name: Backup Old Data
       run: |
         TIMESTAMP=$(date +%Y%m%d%H%M%S)
-        BACKUP_FILE="data/backup/result_check_struct_axios_before_$TIMESTAMP.json"
+        BACKUP_FILE="data/backup/result_get_color_before_$TIMESTAMP.json"
         TARGET_FILE="data/result.json"
         
         if [[ -f "$TARGET_FILE" ]]; then
@@ -27,18 +27,22 @@ jobs:
         fi
 
 
+    #数据处理
     - name: Install axios
       run: npm install axios@1.8.4
+    
+    - name: Install color-thief
+      run: npm i --save colorthief
 
- 
-    - name: Check Detail Data
+    - name: Get Detail Data
       id: handel-json
       uses: actions/github-script@v7
       with:
         result-encoding: string
         script: |
-          const fs = require('fs');
           const axios = require('axios');
+          const ColorThief = require('colorthief');
+          const fs = require('fs');
 
           const targetFilePath = "data/movie.json";
           const resultFilePath = "data/result.json";
@@ -52,36 +56,43 @@ jobs:
             core.setFailed('Failed to read JSON file');
           }
 
+
           let resultData = [];
           try {
             if (fs.existsSync(resultFilePath)) {
               resultData = fs.readFileSync(resultFilePath, 'utf8');
               resultData = JSON.parse(resultData).data;
               
-              // 查看属性
+              // 循环result.json
               for (const dataItem of resultData) {
-                // 不存在的元素
-                const hasProperty = 'area' in dataItem;
+                // 查找的属性
+                const hasProperty = 'cover_color' in dataItem;
 
                 if(!hasProperty) {
                   console.log(`${dataItem.title}中属性不存在, 现在添加`);
+                  // 找到原数据
                   const postId = dataItem.post_id;
-                  const targetItem = movieJson.data.find(item => item.post_id === postId);
+                  const targetItem = movieJson.data.find(item => item.post_id === postId);    
                   if(targetItem) {
-                    const api_url = `${{ vars.NEODB_URL }}${targetItem.item.api_url}`;
                     try {
-                      const response = await axios.get(api_url, { timeout: 5000 });
+                      // 下载图片
+                      const cover_url = targetItem.item.cover_image_url;
+                      const imageResponse = await axios.get(dataItem.item.cover_image_url, { responseType: 'arraybuffer' });
+
+                      // 获取图片颜色
+                      const color = await ColorThief.getColor(imageResponse.data);
+
                       // 修改属性
-                      dataItem.area = response.data.area;
+                      dataItem.cover_color = color;
                     
-                    } catch (axiosError) {
-                      console.error(`Error sending GET request to ${api_url}:`, axiosError);
+                    } catch (error) {
+                      console.error(`Error sending GET request to ${api_url}:`, error);
                     }
                   }
                 }
               }
             }
-            resultData.sort((a, b) => new Date(b.created_time) - new Date(a.created_time));
+            //resultData.sort((a, b) => new Date(b.created_time) - new Date(a.created_time));
 
             fs.writeFileSync(resultFilePath, JSON.stringify({ data: resultData }));
             console.log(`Data saved to ${resultFilePath}`);
@@ -89,8 +100,24 @@ jobs:
             console.error('Error reading result.json:', readError);
           }
 
+
+          try {
+            const data = fs.readFileSync(targetFilePath, 'utf8');
+            const json = JSON.parse(data);
+
+            for (const dataItem of json.data) {
+              
+              const isDuplicate = resultData.some(item => item.post_id === dataItem.post_id);
+              if (isDuplicate) {
+                console.log(`Skipping duplicate item with title: ${dataItem.item.title}`);
+                continue;
+              }
+
+    # 上传
+
     # 把修改后的数据提交到 GitHub 仓库
     - name: Git Add and Commit
+      if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
       uses: EndBug/add-and-commit@v9
       with:
         message: 'chore(data): update neodb data'
