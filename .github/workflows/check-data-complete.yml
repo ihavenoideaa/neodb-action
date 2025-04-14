@@ -1,4 +1,4 @@
-name: Check NeoDB Data
+name: Check NeoDB Data Struct
 
 on:
   workflow_dispatch:
