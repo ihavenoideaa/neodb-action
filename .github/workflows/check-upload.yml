@@ -1,4 +1,4 @@
-name: Sync NeoDB Data
+name: Check NeoDB Data
 
 on:
 #  schedule:
@@ -9,7 +9,7 @@ on:
 
   workflow_dispatch:
   repository_dispatch:
-    types: [sync-neodb]
+    types: [check-neodb]
 
 jobs:
   douban:
@@ -106,7 +106,7 @@ jobs:
                 console.error(`Error sending GET request to ${api_url}:`, axiosError);
               }
             }
-            console.log("Failed to upload images:" error_upload)
+            console.log("Failed to upload images:", error_upload)
 
             resultData.sort((a, b) => new Date(b.created_time) - new Date(a.created_time));
 
