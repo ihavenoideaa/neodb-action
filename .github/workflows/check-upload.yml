@@ -61,7 +61,7 @@ jobs:
                 continue;
               }
               else {
-                console.log(`${item.post_id}不存在`)
+                console.log(`${dataItem.post_id}不存在`)
               }
 
               // 图片上传图床
