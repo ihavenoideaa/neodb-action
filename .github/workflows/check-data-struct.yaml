@@ -38,7 +38,6 @@ jobs:
         result-encoding: string
         script: |
           const fs = require('fs');
-          const axios = require('axios');
 
           const targetFilePath = "data/movie.json";
           const resultFilePath = "data/result.json";
@@ -63,24 +62,18 @@ jobs:
                 const hasProperty = 'year' in dataItem;
 
                 if(!hasProperty) {
-                  console.log(`${dataItem.title}中属性不存在, 现在添加`);
-                  const postId = dataItem.post_id;
-                  const targetItem = movieJson.data.find(item => item.post_id === postId);
-                  if(targetItem) {
-                    const api_url = `${{ vars.NEODB_URL }}${targetItem.item.api_url}`;
-                    try {
-                      const response = await axios.get(api_url, { timeout: 5000 });
-                      dataItem.year = response.data.year ? response.data.year : response.data.pub_year;
-                    } catch (axiosError) {
-                      console.error(`Error sending GET request to ${api_url}:`, axiosError);
-                    }
+                  //console.log(`${dataItem.title}中属性不存在, 现在添加`);
+                 // const postId = dataItem.post_id;
+                 // const targetItem = movieJson.data.find(item => item.post_id === postId);
+                 // if(targetItem) {
+                      
                   }
                 }
               }
             }
             resultData.sort((a, b) => new Date(b.created_time) - new Date(a.created_time));
 
-            fs.writeFileSync(resultFilePath, JSON.stringify({ data: resultData }));
+           // fs.writeFileSync(resultFilePath, JSON.stringify({ data: resultData }));
             console.log(`Data saved to ${resultFilePath}`);
           } catch (readError) {
             console.error('Error reading result.json:', readError);
