@@ -1,4 +1,4 @@
-name: GET NeoDB COVER MAIN COLOR
+name: GET NeoDB Cover Main Color
 
 on:
   workflow_dispatch:
@@ -99,19 +99,6 @@ jobs:
           } catch (readError) {
             console.error('Error reading result.json:', readError);
           }
-
-
-          try {
-            const data = fs.readFileSync(targetFilePath, 'utf8');
-            const json = JSON.parse(data);
-
-            for (const dataItem of json.data) {
-              
-              const isDuplicate = resultData.some(item => item.post_id === dataItem.post_id);
-              if (isDuplicate) {
-                console.log(`Skipping duplicate item with title: ${dataItem.item.title}`);
-                continue;
-              }
 
     # 上传
 
