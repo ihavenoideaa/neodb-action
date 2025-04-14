@@ -29,4 +29,7 @@ jobs:
 
       - name: Deploy to Halo
         run: |
-          npx halo-static-pages-deploy-cli deploy -e ${{ secrets.HALO_UPLOAD_ENDPOINT }} -i ${{ secrets.HALO_UPLOAD_ID }} -t ${{ secrets.HALO_UPLOAD_TOKEN }} -f data/result.json
+          mkdir -p upload/movie
+          cp -f data/result.json upload/movie/
+          npx halo-static-pages-deploy-cli deploy -e ${{ secrets.HALO_UPLOAD_ENDPOINT }} -i ${{ secrets.HALO_UPLOAD_ID }} -t ${{ secrets.HALO_UPLOAD_TOKEN }} -f  upload
+          rm -rf upload
