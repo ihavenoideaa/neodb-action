@@ -121,78 +121,103 @@ jobs:
     - name: Install axios
       run: npm install axios
 
-    # - name: Get Detail Data
-    #   # if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
-    #   id: handel-json
-    #   uses: actions/github-script@v7
-    #   with:
-    #     result-encoding: string
-    #     script: |
-    #       const fs = require('fs');
-    #       const axios = require('axios');
+    - name: Get Detail Data
+      # if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
+      id: handel-json
+      uses: actions/github-script@v7
+      with:
+        result-encoding: string
+        script: |
+          const fs = require('fs');
+          const axios = require('axios');
 
-    #       const targetFilePath = "${{ env.WORK_DIR }}/data/movie.json";
-    #       const resultFilePath = "${{ env.WORK_DIR }}/data/result.json";
-    #       let resultData = [];
-    #       try {
-    #         if (fs.existsSync(resultFilePath)) {
-    #           const resultData = fs.readFileSync(resultFilePath, 'utf8');
-    #           resultData = JSON.parse(resultData).data || [];
-    #         }
-    #       } catch (readError) {
-    #         console.error('Error reading result.json:', readError);
-    #       }
+          const targetFilePath = "${{ env.WORK_DIR }}/data/movie.json";
+          const resultFilePath = "${{ env.WORK_DIR }}/data/result.json";
+          let resultData = [];
+          try {
+            if (fs.existsSync(resultFilePath)) {
+              const resultData = fs.readFileSync(resultFilePath, 'utf8');
+              resultData = JSON.parse(resultData).data || [];
+            }
+          } catch (readError) {
+            console.error('Error reading result.json:', readError);
+          }
 
-    #       try {
-    #         const data = fs.readFileSync(targetFilePath, 'utf8');
-    #         const json = JSON.parse(data);
-    #         const all_json = {"data": []};
-    #         for (const dataItem of json.data) {
-    #           const isDuplicate = resultData.some(item => item.post_id === dataItem.post_id);
-    #           if (isDuplicate) {
-    #             console.log(`Skipping duplicate item with title: ${dataItem.item.title}`);
-    #             continue;
-    #           }
+          try {
+            const data = fs.readFileSync(targetFilePath, 'utf8');
+            const json = JSON.parse(data);
+            const all_json = {"data": []};
+            int testCount = 0;
+            for (const dataItem of json.data) {
+              testCount += 1;
+              if(testCount >=5) break;
+              const isDuplicate = resultData.some(item => item.post_id === dataItem.post_id);
+              if (isDuplicate) {
+                console.log(`Skipping duplicate item with title: ${dataItem.item.title}`);
+                continue;
+              }
 
-    #           let img_url;
+              // 图片上传图床
+              let cover_img_url;
+              try {
+                const formData = new FormData();
+                // 从 URL 下载图片数据
+                const imageResponse = await axios.get(dataItem.item.cover_image_url, { responseType: 'stream' });
+                formData.append('image', imageResponse.data);
+                formData.append('token', "${{ secrets.UPLOAD_IMAGE_TOKEN }}");
+
+                // 发送 POST 请求
+                const uploadResponse = await axios.post("${{ secrets.UPLOAD_IMAGE_API }}", formData, {
+                  headers: {
+                    ...formData.getHeaders()
+                  },
+                  timeout: 5000
+                });
+                console.log('Image upload api success:', uploadResponse.data);
+                cover_img_url = uploadResponse.data.url;
+              } catch (uploadError) {
+                console.error('Image upload api error:', uploadError);
+                continue;
+              }
 
 
-    #           const api_url = `${{ vars.NEODB_URL }}${dataItem.item.api_url}`;
-    #           try {
-    #             const response = await axios.get(api_url, { timeout: 5000 });
+              const api_url = `${{ vars.NEODB_URL }}${dataItem.item.api_url}`;
+              try {
+                const response = await axios.get(api_url, { timeout: 5000 });
 
-    #             // 组成 json
-    #             const oneItem = {
-    #               post_id: dataItem.post_id,
-    #               title: dataItem.item.title,
-    #               type: dataItem.item.type,
-    #               rating: dataItem.item.rating,
-    #               url: dataItem.item.url,
-    #               description: dataItem.item.description,
-    #               created_time: dataItem.created_time,
-    #               comment_text: dataItem.comment_text,
-    #               rating_grade: dataItem.rating_grade,
-    #               tags: dataItem.tags,
-    #               year: response.data.year,
-    #               language: response.data.language
-    #               cover: img_url
-    #             };
-    #             resultData.push(oneItem);
-    #           } catch (axiosError) {
-    #             console.error(`Error sending GET request to ${api_url}:`, axiosError);
-    #           }
-    #         }
-    #         //core.setOutput('all_json', JSON.stringify(all_json));
-    #         fs.writeFileSync(resultFilePath, JSON.stringify({ data: resultData }, null, 2));
-    #         console.log(`Data saved to ${resultFilePath}`);
-    #       } catch (error) {
-    #         console.error('Error reading JSON file:', error);
-    #         core.setFailed('Failed to read JSON file');
-    #       }
+                // 组成 json
+                const oneItem = {
+                  post_id: dataItem.post_id,
+                  title: dataItem.item.title,
+                  type: dataItem.item.type,
+                  rating: dataItem.item.rating,
+                  url: dataItem.item.url,
+                  description: dataItem.item.description,
+                  created_time: dataItem.created_time,
+                  comment_text: dataItem.comment_text,
+                  rating_grade: dataItem.rating_grade,
+                  tags: dataItem.tags,
+                  year: response.data.year,
+                  language: response.data.language,
+                  cover: cover_img_url
+                };
+                resultData.push(oneItem);
+              } catch (axiosError) {
+                console.error(`Error sending GET request to ${api_url}:`, axiosError);
+              }
+            }
+            //core.setOutput('all_json', JSON.stringify(all_json));
+            fs.writeFileSync(resultFilePath, JSON.stringify({ data: resultData }, null, 2));
+            console.log(`Data saved to ${resultFilePath}`);
+          } catch (error) {
+            console.error('Error reading JSON file:', error);
+            core.setFailed('Failed to read JSON file');
+          }
+
         
     #下载封面
     - name: Download NeoDB Cover
-      # if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
+      if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
       run: |
         # 检查 movie 目录是否存在，如果不存在则创建
         if [ ! -d "images" ]; then
@@ -200,7 +225,7 @@ jobs:
         fi
 
         # 读取本地的 movie.json 文件内容
-        json=$(cat "${{ env.WORK_DIR }}/data/movie.json")
+        json=$(cat /data/movie.json)
 
         # 提取图片 URL
         image_urls=$(echo "$json" | jq -r '.data[].item.cover_image_url')
