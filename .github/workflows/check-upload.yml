@@ -38,7 +38,7 @@ jobs:
           let resultData = [];
           try {
             if (fs.existsSync(resultFilePath)) {
-              const resultData = fs.readFileSync(resultFilePath, 'utf8');
+              resultData = fs.readFileSync(resultFilePath, 'utf8');
               resultData = JSON.parse(resultData).data || [];
               console.log("读取：", resultData)
             }
@@ -55,7 +55,7 @@ jobs:
             for (const dataItem of json.data) {
               testCount+=1;
               if(testCount >=5) break;
-              const isDuplicate = resultData.data.some(item => item.post_id === dataItem.post_id);
+              const isDuplicate = resultData.some(item => item.post_id === dataItem.post_id);
               if (isDuplicate) {
                 console.log(`Skipping duplicate item with title: ${dataItem.item.title}`);
                 continue;
