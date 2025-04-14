@@ -86,7 +86,7 @@ jobs:
                       dataItem.cover_color = color;
                     
                     } catch (error) {
-                      console.error(`Error when process image ${dataItem.item.title}:`, error);
+                      console.error(`Error when process image ${dataItem.title}:`, error);
                     }
                   }
                 }
