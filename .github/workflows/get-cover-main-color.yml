@@ -77,7 +77,7 @@ jobs:
                     try {
                       // 下载图片
                       const cover_url = targetItem.item.cover_image_url;
-                      const imageResponse = await axios.get(dataItem.item.cover_image_url, { responseType: 'arraybuffer' });
+                      const imageResponse = await axios.get(cover_url, { responseType: 'arraybuffer' });
 
                       // 获取图片颜色
                       const color = await ColorThief.getColor(imageResponse.data);
