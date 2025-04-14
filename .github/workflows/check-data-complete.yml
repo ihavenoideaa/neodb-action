@@ -14,7 +14,6 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Backup Old Data
-      if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
       run: |
         TIMESTAMP=$(date +%Y%m%d%H%M%S)
         BACKUP_FILE="data/backup/result_check_struct_$TIMESTAMP.json"
