@@ -1,0 +1,64 @@
+name: Sort NeoDB Data
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [sort-neodb-data]
+
+jobs:
+  douban:
+    name: Sort Data
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Backup Old Data
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          BACKUP_FILE="data/backup/result_ sort_before_$TIMESTAMP.json"
+          TARGET_FILE="data/result.json"
+          
+          if [[ -f "$TARGET_FILE" ]]; then
+            cp -f $TARGET_FILE $BACKUP_FILE
+            echo "Backed up old data to $BACKUP_FILE"
+          else
+            echo "There is no old data."
+          fi
+
+  
+      - name: Check Detail Data
+        id: handel-json
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            const fs = require('fs');
+            const axios = require('axios');
+
+            const resultFilePath = "data/result.json";
+
+            let resultData = [];
+            try {
+              if (fs.existsSync(resultFilePath)) {
+                resultData = fs.readFileSync(resultFilePath, 'utf8');
+                resultData = JSON.parse(resultData).data;
+              
+                resultData.sort((a, b) => new Date(b.created_time) - new Date(a.created_time));
+                fs.writeFileSync(resultFilePath, JSON.stringify({ data: resultData }));
+              }
+
+              console.log(`Data saved to ${resultFilePath}`);
+            } catch (readError) {
+              console.error('Error reading result.json:', readError);
+            }
+
+      # 把修改后的数据提交到 GitHub 仓库
+      - name: Git Add and Commit
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: 'chore(data): update neodb data'
+          committer_name: 'github-actions[bot]'
+          committer_email: 'github-actions[bot]@users.noreply.github.com'
+          add: |
+            './data'
