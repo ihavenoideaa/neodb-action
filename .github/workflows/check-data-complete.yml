@@ -38,9 +38,11 @@ jobs:
           const targetFilePath = "data/movie.json";
           const resultFilePath = "data/result.json";
 
+
+          let movieJson;
           try {
             const data = fs.readFileSync(targetFilePath, 'utf8');
-            const movieJson = JSON.parse(data);
+            movieJson = JSON.parse(data);
           } catch (error) {
             console.error('Error reading JSON file:', error);
             core.setFailed('Failed to read JSON file');
