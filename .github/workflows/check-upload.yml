@@ -22,7 +22,7 @@ jobs:
     #数据处理
     - name: Install axios
       run: npm install axios@1.8.4
-
+ 
     - name: Check Detail Data
       id: handel-json
       uses: actions/github-script@v7
@@ -40,21 +40,28 @@ jobs:
             if (fs.existsSync(resultFilePath)) {
               const resultData = fs.readFileSync(resultFilePath, 'utf8');
               resultData = JSON.parse(resultData).data || [];
+              console.log("读取：", resultData)
             }
           } catch (readError) {
             console.error('Error reading result.json:', readError);
           }
-
+          
           try {
             const data = fs.readFileSync(targetFilePath, 'utf8');
             const json = JSON.parse(data);
             const all_json = {"data": []};
             let error_upload = [];
+            let testCount =1;
             for (const dataItem of json.data) {
+              testCount+=1;
+              if(testCount >=5) break;
               const isDuplicate = resultData.some(item => item.post_id === dataItem.post_id);
               if (isDuplicate) {
                 console.log(`Skipping duplicate item with title: ${dataItem.item.title}`);
                 continue;
+              }
+              else {
+                console.log(`${item.post_id}不存在`)
               }
 
               // 图片上传图床
