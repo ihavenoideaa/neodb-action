@@ -70,8 +70,7 @@ jobs:
                     const api_url = `${{ vars.NEODB_URL }}${targetItem.item.api_url}`;
                     try {
                       const response = await axios.get(api_url, { timeout: 5000 });
-
-                      dataItem.year = response.data.year ? response.data.year : response.data.pub_year,
+                      dataItem.year = response.data.year ? response.data.year : response.data.pub_year;
                     } catch (axiosError) {
                       console.error(`Error sending GET request to ${api_url}:`, axiosError);
                     }
