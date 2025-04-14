@@ -147,7 +147,7 @@ jobs:
             const data = fs.readFileSync(targetFilePath, 'utf8');
             const json = JSON.parse(data);
             const all_json = {"data": []};
-            int testCount = 0;
+            let testCount = 0;
             for (const dataItem of json.data) {
               testCount += 1;
               if(testCount >=5) break;
