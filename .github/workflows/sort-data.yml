@@ -16,7 +16,7 @@ jobs:
       - name: Backup Old Data
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          BACKUP_FILE="data/backup/result_ sort_before_$TIMESTAMP.json"
+          BACKUP_FILE="data/backup/result_sort_before_$TIMESTAMP.json"
           TARGET_FILE="data/result.json"
           
           if [[ -f "$TARGET_FILE" ]]; then
