@@ -148,10 +148,7 @@ jobs:
             const data = fs.readFileSync(targetFilePath, 'utf8');
             const json = JSON.parse(data);
             const all_json = {"data": []};
-            let testCount = 0;
             for (const dataItem of json.data) {
-              testCount += 1;
-              if(testCount >=5) break;
               const isDuplicate = resultData.some(item => item.post_id === dataItem.post_id);
               if (isDuplicate) {
                 console.log(`Skipping duplicate item with title: ${dataItem.item.title}`);
@@ -180,7 +177,6 @@ jobs:
                 console.error('Image upload api error:', uploadError);
                 continue;
               }
-
 
               const api_url = `${{ vars.NEODB_URL }}${dataItem.item.api_url}`;
               try {
@@ -217,36 +213,36 @@ jobs:
 
         
     #下载封面
-    - name: Download NeoDB Cover
-      if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
-      run: |
-        # 检查 movie 目录是否存在，如果不存在则创建
-        if [ ! -d "images" ]; then
-          mkdir images
-        fi
+    # - name: Download NeoDB Cover
+    #   if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
+    #   run: |
+    #     # 检查 movie 目录是否存在，如果不存在则创建
+    #     if [ ! -d "images" ]; then
+    #       mkdir images
+    #     fi
 
-        # 读取本地的 movie.json 文件内容
-        json=$(cat /data/movie.json)
+    #     # 读取本地的 movie.json 文件内容
+    #     json=$(cat /data/movie.json)
 
-        # 提取图片 URL
-        image_urls=$(echo "$json" | jq -r '.data[].item.cover_image_url')
+    #     # 提取图片 URL
+    #     image_urls=$(echo "$json" | jq -r '.data[].item.cover_image_url')
 
-        # 遍历图片 URL 并下载图片
-        for url in $image_urls; do
+    #     # 遍历图片 URL 并下载图片
+    #     for url in $image_urls; do
 
-          filename=$(basename "$url")
-          filepath="images/$filename"
+    #       filename=$(basename "$url")
+    #       filepath="images/$filename"
 
-          # 检查文件是否已存在
-          if [ -f "$filepath" ]; then
-            echo "Skipping $filename - File already exists"
-          else
-            # 使用 curl 命令下载图片
-            curl -o "$filepath" "$url"
-            echo "Downloaded $filename"
-            echo "REMOTE_UUID=''" >> $GITHUB_ENV
-          fi
-        done
+    #       # 检查文件是否已存在
+    #       if [ -f "$filepath" ]; then
+    #         echo "Skipping $filename - File already exists"
+    #       else
+    #         # 使用 curl 命令下载图片
+    #         curl -o "$filepath" "$url"
+    #         echo "Downloaded $filename"
+    #         echo "REMOTE_UUID=''" >> $GITHUB_ENV
+    #       fi
+    #     done
 
     # 上传
 
