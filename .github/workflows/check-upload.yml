@@ -55,7 +55,7 @@ jobs:
             for (const dataItem of json.data) {
               testCount+=1;
               if(testCount >=5) break;
-              const isDuplicate = resultData.some(item => item.post_id === dataItem.post_id);
+              const isDuplicate = resultData.data.some(item => item.post_id === dataItem.post_id);
               if (isDuplicate) {
                 console.log(`Skipping duplicate item with title: ${dataItem.item.title}`);
                 continue;
