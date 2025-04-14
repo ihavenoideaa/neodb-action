@@ -1,0 +1,129 @@
+name: Sync NeoDB Data
+
+on:
+#  schedule:
+  # every monday
+#    - cron: "0 9 * * 1"
+  # watch:
+  #   types: [started]
+
+  workflow_dispatch:
+  repository_dispatch:
+    types: [sync-neodb]
+
+jobs:
+  douban:
+    name: Check Upload Image Data
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    #数据处理
+    - name: Install axios
+      run: npm install axios@1.8.4
+
+    - name: Get Detail Data
+      id: handel-json
+      uses: actions/github-script@v7
+      with:
+        result-encoding: string
+        script: |
+          const fs = require('fs');
+          const axios = require('axios');
+          const FormData = require('form-data');
+
+          const targetFilePath = "${{ env.WORK_DIR }}/data/movie.json";
+          const resultFilePath = "${{ env.WORK_DIR }}/data/result.json";
+          let resultData = [];
+          try {
+            if (fs.existsSync(resultFilePath)) {
+              const resultData = fs.readFileSync(resultFilePath, 'utf8');
+              resultData = JSON.parse(resultData).data || [];
+            }
+          } catch (readError) {
+            console.error('Error reading result.json:', readError);
+          }
+
+          try {
+            const data = fs.readFileSync(targetFilePath, 'utf8');
+            const json = JSON.parse(data);
+            const all_json = {"data": []};
+            for (const dataItem of json.data) {
+              const isDuplicate = resultData.some(item => item.post_id === dataItem.post_id);
+              if (isDuplicate) {
+                console.log(`Skipping duplicate item with title: ${dataItem.item.title}`);
+                continue;
+              }
+
+              // 图片上传图床
+              let cover_img_url;
+              try {
+                const formData = new FormData();
+                // 从 URL 下载图片数据
+                const imageResponse = await axios.get(dataItem.item.cover_image_url, { responseType: 'stream' });
+                formData.append('image', imageResponse.data);
+                formData.append('token', "${{ secrets.UPLOAD_IMAGE_TOKEN }}");
+
+                // 发送 POST 请求
+                const uploadResponse = await axios.post("${{ secrets.UPLOAD_IMAGE_API }}", formData, {
+                  headers: {
+                    ...formData.getHeaders()
+                  },
+                  timeout: 5000
+                });
+                console.log('Image upload api success:', uploadResponse.data);
+                cover_img_url = uploadResponse.data.url;
+              } catch (uploadError) {
+                console.error('Image upload api error:', uploadError);
+                continue;
+              }
+
+              const api_url = `${{ vars.NEODB_URL }}${dataItem.item.api_url}`;
+              try {
+                const response = await axios.get(api_url, { timeout: 5000 });
+
+                // 组成 json
+                const oneItem = {
+                  post_id: dataItem.post_id,
+                  title: dataItem.item.title,
+                  type: dataItem.item.type,
+                  rating: dataItem.item.rating,
+                  url: dataItem.item.url,
+                  description: dataItem.item.description,
+                  created_time: dataItem.created_time,
+                  comment_text: dataItem.comment_text,
+                  rating_grade: dataItem.rating_grade,
+                  tags: dataItem.tags,
+                  year: response.data.year,
+                  language: response.data.language,
+                  cover: cover_img_url
+                };
+                resultData.push(oneItem);
+              } catch (axiosError) {
+                console.error(`Error sending GET request to ${api_url}:`, axiosError);
+              }
+            }
+            resultData.sort((a, b) => new Date(b.created_time) - new Date(a.created_time));
+
+            //core.setOutput('resultData', JSON.stringify(resultData));
+            fs.writeFileSync(resultFilePath, JSON.stringify({ data: resultData }));
+            console.log(`Data saved to ${resultFilePath}`);
+          } catch (error) {
+            console.error('Error reading JSON file:', error);
+            core.setFailed('Failed to read JSON file');
+          }
+
+
+    # 上传
+
+    # 把修改后的数据提交到 GitHub 仓库
+    - name: Git Add and Commit
+      if: ${{ env.REMOTE_UUID != env.CURRENT_UUID }}
+      uses: EndBug/add-and-commit@v9
+      with:
+        message: 'chore(data): update neodb data'
+        committer_name: 'github-actions[bot]'
+        committer_email: 'github-actions[bot]@users.noreply.github.com'
+        add: |
+          './data'
