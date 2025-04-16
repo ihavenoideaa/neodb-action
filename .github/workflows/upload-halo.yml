@@ -21,11 +21,6 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-    
-      - name: Install dependencies
-        run: pnpm install
-      - name: Build
-        run: pnpm build
 
       - name: Deploy to Halo
         run: |
