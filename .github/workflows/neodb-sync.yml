@@ -252,3 +252,10 @@ jobs:
         add: |
           './data'
           './images'
+
+    - name: Repository Dispatch
+      uses: peter-evans/repository-dispatch@v3
+      with:
+        token: ${{ secrets.GH_TOKEN }}
+        repository: ihavenoideaa/neodb-action
+        event-type: get-color-neodb

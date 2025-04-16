@@ -111,3 +111,11 @@ jobs:
         committer_email: 'github-actions[bot]@users.noreply.github.com'
         add: |
           './data'
+
+    - name: Repository Dispatch
+      uses: peter-evans/repository-dispatch@v3
+      with:
+        token: ${{ secrets.GH_TOKEN }}
+        repository: ihavenoideaa/neodb-action
+        event-type: upload-data-to-halo
+        
