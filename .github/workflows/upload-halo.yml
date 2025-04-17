@@ -17,6 +17,8 @@ jobs:
       - name: Deploy to Halo
         run: |
           mkdir -p upload/movie
+          OLDRESULT=$(ls -1t data/backup/result_* | head -n 1)
           cp -f data/result.json upload/movie/
+          cp -f $OLDRESULT upload/movie/ result.back.json
           npx halo-static-pages-deploy-cli deploy -e ${{ secrets.HALO_UPLOAD_ENDPOINT }} -i ${{ secrets.HALO_UPLOAD_ID }} -t ${{ secrets.HALO_UPLOAD_TOKEN }} -f  upload
           rm -rf upload
